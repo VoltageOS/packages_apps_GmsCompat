@@ -61,6 +61,7 @@ BugFixFeatures__fix_frp_in_r false
 # method, which doesn't have an unprivileged modern version. It's used for location estimation based
 # on nearby Wi-Fi access points
 d_psl false
+enable_activity_recognition_throttling false
 fwm true
 
 [com.google.android.gms.kidssettings#com.google.android.gms]
