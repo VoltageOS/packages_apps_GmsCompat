@@ -20,6 +20,7 @@ android_app {
 
     required: [
         "GmsCompatConfig",
+        "GmsCompatLib",
         "default-permissions_app.grapheneos.gmscompat.xml",
         "whitelist_app.grapheneos.gmscompat.xml",
     ],

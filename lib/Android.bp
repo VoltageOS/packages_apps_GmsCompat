@@ -1,0 +1,16 @@
+android_app {
+    name: "GmsCompatLib",
+    platform_apis: true,
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.aidl",
+    ],
+    resource_dirs: [
+        "res",
+    ],
+    manifest: "AndroidManifest.xml",
+
+    optimize: {
+        enabled: false,
+    }
+}
