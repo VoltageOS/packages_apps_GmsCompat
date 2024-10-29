@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.Parcelable;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.Base64;
@@ -22,12 +21,9 @@ import java.io.InputStream;
 import java.io.InvalidObjectException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -35,16 +31,18 @@ import java.util.regex.PatternSyntaxException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static app.grapheneos.gmscompat.Const.IS_DEV_BUILD;
+
 public class GmsCompatConfigParser {
     private static final String TAG = "GmsCompatConfigParser";
 
-    private final boolean strict = Build.isDebuggable() && Build.VERSION.SDK_INT >= 33;
+    private final boolean strict = IS_DEV_BUILD && Build.VERSION.SDK_INT >= 33;
     private boolean invalid;
 
     private GmsCompatConfigParser() {}
 
     public static GmsCompatConfig exec(Context ctx) {
-        if (Build.isDebuggable()) {
+        if (IS_DEV_BUILD) {
             try {
                 GmsCompatConfig res = execInner(ctx, ConfigUpdateReceiver.CONFIG_HOLDER_PACKAGE_DEV);
                 return Objects.requireNonNull(res);
@@ -68,7 +66,7 @@ public class GmsCompatConfigParser {
     public static ApplicationInfo configHolderInfo(Context ctx) throws PackageManager.NameNotFoundException {
         var flags = PackageManager.ApplicationInfoFlags.of(0L);
         PackageManager pm = ctx.getPackageManager();
-        if (Build.isDebuggable()) {
+        if (IS_DEV_BUILD) {
             try {
                 return pm.getApplicationInfo(ConfigUpdateReceiver.CONFIG_HOLDER_PACKAGE_DEV, flags);
             } catch (PackageManager.NameNotFoundException e) {

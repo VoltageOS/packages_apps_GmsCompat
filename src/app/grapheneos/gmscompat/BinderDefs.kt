@@ -4,11 +4,11 @@ import android.Manifest
 import android.app.ActivityManager
 import android.content.Intent
 import android.os.BinderDef
-import android.os.Build.IS_DEBUGGABLE
 import android.util.ArrayMap
 import android.util.ArraySet
 import androidx.core.content.edit
 import app.grapheneos.gmscompat.App.MainProcessPrefs
+import app.grapheneos.gmscompat.Const.IS_DEV_BUILD
 import app.grapheneos.gmscompat.location.GLocationService
 import com.android.internal.gmscompat.GmsInfo
 import com.android.internal.gmscompat.GmcBinderDefs.BinderDefStateListener
@@ -97,7 +97,7 @@ object BinderDefs {
         // Note that the callerPkg value is not verified at this point, verification is delayed
         // until the time of first use to reduce perf impact
 
-        if (IS_DEBUGGABLE) {
+        if (IS_DEV_BUILD) {
             logd{"caller $callerPkg processState ${ActivityManager.procStateToString(processState)} $ifaceName"}
         }
 

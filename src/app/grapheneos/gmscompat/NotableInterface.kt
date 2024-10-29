@@ -3,7 +3,7 @@ package app.grapheneos.gmscompat
 import android.Manifest
 import android.app.ActivityManager
 import android.content.Context
-import android.os.Build.IS_DEBUGGABLE
+import app.grapheneos.gmscompat.Const.IS_DEV_BUILD
 import com.android.internal.gmscompat.GmsInfo
 
 enum class NotableInterface(val ifaceName: String) {
@@ -13,7 +13,7 @@ enum class NotableInterface(val ifaceName: String) {
     ;
 
     fun onAcquiredByClient(callerPkg: String, processState: Int) {
-        if (IS_DEBUGGABLE) {
+        if (IS_DEV_BUILD) {
             logd{"pkgName $callerPkg, processState: ${ActivityManager.procStateToString(processState)}, ifaceName $ifaceName"}
         }
 
