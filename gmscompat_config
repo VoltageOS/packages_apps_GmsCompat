@@ -8,6 +8,11 @@
 # (location access being disabled is handled correctly, but spoofing it would break other functionality)
 PromoFeature__enabled perms-none-of android.permission.ACCESS_COARSE_LOCATION false
 
+[com.google.android.gms.fido]
+# Note that the rest of dynamic FIDO flags are forced to their default values by force_default_flags
+# below for increased stability
+Passkeys__client_data_hash_override_for_security_keys true
+
 [com.google.android.metrics]
 # controls access to privileged StatsManager#getRegisteredExperimentIds()
 add_external_experiment_ids false
