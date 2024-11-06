@@ -255,6 +255,9 @@ isUserOfType false
 [com.google.android.gms.fido]
 .+
 
+[com.google.android.gms.gcm]
+.+
+
 [[force_ComponentEnabledSettings]]
 [com.google.android.gms]
 # causes chain crashes on Pixel Tablet due to the missing Dock Manager app
