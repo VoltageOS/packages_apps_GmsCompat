@@ -275,6 +275,10 @@ object BinderGms2Gca : IGms2Gca.Stub() {
         ).show(Notifications.ID_PLAY_STORE_MISSING_OBB_PERMISSION)
     }
 
+    override fun raisePackageToForeground(targetPkg: String, durationMs: Long, reason: String?, reasonCode: Int) {
+        TempServiceBinding.create(targetPkg, durationMs, reason, reasonCode)
+    }
+
     override fun startActivityFromTheBackground(callerPkg: String, intent: PendingIntent) {
         val ctx = App.ctx()
         Notifications.builder(Notifications.CH_BACKGROUND_ACTIVITY_START)
