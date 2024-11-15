@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.BinderDef
 import android.util.ArrayMap
 import android.util.ArraySet
+import android.util.Log
 import androidx.core.content.edit
 import app.grapheneos.gmscompat.App.MainProcessPrefs
 import app.grapheneos.gmscompat.Const.IS_DEV_BUILD
@@ -97,8 +98,9 @@ object BinderDefs {
         // Note that the callerPkg value is not verified at this point, verification is delayed
         // until the time of first use to reduce perf impact
 
-        if (IS_DEV_BUILD) {
-            logd{"caller $callerPkg processState ${ActivityManager.procStateToString(processState)} $ifaceName"}
+        val TAG = "maybeGetBinderDef"
+        if (Log.isLoggable(TAG, Log.VERBOSE)) {
+            Log.v(TAG, "caller $callerPkg processState ${ActivityManager.procStateToString(processState)} $ifaceName")
         }
 
         val notableIface = notableIfaceNames.get(ifaceName)
