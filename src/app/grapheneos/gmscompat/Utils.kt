@@ -19,6 +19,10 @@ fun mainThread() {
     check(Thread.currentThread() === App.mainThread())
 }
 
+fun notMainThread() {
+    check(Thread.currentThread() !== App.mainThread())
+}
+
 fun logd() {
     if (!ENABLE_LOGGING) {
         return

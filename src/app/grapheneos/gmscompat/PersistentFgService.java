@@ -3,204 +3,133 @@ package app.grapheneos.gmscompat;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.app.compat.gms.GmsCompat;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
-import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.ParcelUuid;
 import android.util.ArrayMap;
-import android.util.ArraySet;
 import android.util.Log;
-
-import androidx.annotation.Nullable;
-
-import com.android.internal.gmscompat.GmsInfo;
-import com.android.internal.gmscompat.client.GmsCompatClientService;
 
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
-// raises priority of GMS Core and Play Store, thereby allowing them to start services when they need to
+// The purpose of this service is to raise GmsCompat app to foreground service level while GMS
+// components are running. This allows to host long-living objects in GmsCompat app process and to
+// temporarily raise GMS components and/or their clients to foreground level when that's required for
+// starting a service, receiving a FCM notification, etc.
 public class PersistentFgService extends Service {
-    private static final String TAG = "PersistentFgService";
+    private static final String TAG = PersistentFgService.class.getSimpleName();
 
-    private static final ArrayMap<ParcelUuid, CountDownLatch> pendingLatches = new ArrayMap<>(5);
-    private static final ArraySet<CountDownLatch> completedLatches = new ArraySet<>(5);
+    public static CountDownLatch requestStart() {
+        return command(CMD_START);
+    }
 
-    private static final String EXTRA_ID = "id";
+    public static CountDownLatch release() {
+        return command(CMD_MAYBE_STOP);
+    }
 
-    final ArraySet<String> boundPackages = new ArraySet<>();
+    // access only from the main thread
+    private static final ArrayMap<ParcelUuid, CountDownLatch> pendingCommands = new ArrayMap<>(7);
 
-    public void onCreate() {
+    private static CountDownLatch command(String cmd) {
+        // otherwise CountDownLatch will deadlock
+        UtilsKt.notMainThread();
+
+        Context ctx = App.ctx();
+
+        var latch = new CountDownLatch(1);
+
+        // onStartCommand() is called on the main thread, see pendingCommands operations for why
+        // this is important
+        ctx.getMainThreadHandler().post(() -> {
+            var i = new Intent(ctx, PersistentFgService.class);
+            i.setAction(cmd);
+
+            ParcelUuid commandId = new ParcelUuid(UUID.randomUUID());
+            i.putExtra(EXTRA_COMMAND_ID, commandId);
+
+            if (pendingCommands.put(commandId, latch) != null) {
+                throw new IllegalStateException("duplicate commandId");
+            }
+            Log.d(TAG, "command " + cmd + ", id " + commandId);
+            ctx.startForegroundService(i);
+        });
+
+        return latch;
+    }
+
+    private static final String CMD_START = "start";
+    private static final String CMD_MAYBE_STOP = "maybe_stop";
+    private static final String EXTRA_COMMAND_ID = "cmd_id";
+
+    private int referenceCount;
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        String cmd = intent.getAction();
+        ParcelUuid commandId = intent.getParcelableExtra(EXTRA_COMMAND_ID, ParcelUuid.class);
+        int refCount = referenceCount;
+        Log.d(TAG, "onStartCommand, cmd " + cmd + ", refCount " + refCount + ", id " + commandId);
+
+        CountDownLatch latch = pendingCommands.remove(commandId);
+        if (latch == null) {
+            if (refCount != 0) {
+                throw new IllegalStateException("invalid ref count: " + refCount + ", commandId " + commandId);
+            }
+            Log.d(TAG, "ignoring command from previous process instance");
+            // OS requires that startForeground() is called after startForegroundService()
+            startForeground(Notification.FOREGROUND_SERVICE_DEFERRED);
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+
+        switch (cmd) {
+            case CMD_START -> {
+                ++refCount;
+                if (refCount == 1) {
+                    startForeground(Notification.FOREGROUND_SERVICE_IMMEDIATE);
+                }
+            }
+            case CMD_MAYBE_STOP -> {
+                --refCount;
+                if (refCount == 0) {
+                    stopSelf();
+                }
+            }
+            default -> throw new IllegalStateException(cmd);
+        }
+        if (refCount < 0) {
+            throw new IllegalStateException("invalid ref count: " + referenceCount);
+        }
+        referenceCount = refCount;
+        latch.countDown();
+
+        return START_NOT_STICKY;
+    }
+
+    private void startForeground(int notifBehavior) {
         Notification.Builder nb = Notifications.builder(Notifications.CH_PERSISTENT_FG_SERVICE);
         nb.setSmallIcon(android.R.drawable.ic_dialog_dialer);
         nb.setContentTitle(getText(R.string.persistent_fg_service_notif));
         nb.setContentIntent(PendingIntent.getActivity(this, 0,
             new Intent(this, MainActivity.class), PendingIntent.FLAG_IMMUTABLE));
-        nb.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE);
+        nb.setForegroundServiceBehavior(notifBehavior);
         nb.setGroup(Notifications.CH_PERSISTENT_FG_SERVICE);
         startForeground(Notifications.ID_PERSISTENT_FG_SERVICE, nb.build());
     }
 
-    static void start(String callerPackage, String processName) {
-        Context ctx = App.ctx();
-
-        ParcelUuid uuid = new ParcelUuid(UUID.randomUUID());
-
-        Intent intent = new Intent(callerPackage);
-        intent.setClass(ctx, PersistentFgService.class);
-        intent.putExtra(EXTRA_ID, uuid);
-
-        CountDownLatch latch = new CountDownLatch(1);
-        synchronized (pendingLatches) {
-            pendingLatches.put(uuid, latch);
-        }
-
-        // call startForegroundService() from the main thread, not the binder thread
-        new Handler(ctx.getMainLooper()).post(() -> {
-            ctx.startForegroundService(intent);
-        });
-
-        Log.d(TAG, "caller " + callerPackage + ", processName " + processName +  ", UUID " + uuid);
-
-        try {
-            // make sure priority of the caller is raised by bindService() before returning, otherwise
-            // startService() by caller may throw BackgroundServiceStartNotAllowedException if it wins the race
-            // against startForegroundService() + bindService() in this process
-            if (latch.await(30, TimeUnit.SECONDS)) {
-                synchronized (completedLatches) {
-                    if (!completedLatches.remove(latch)) {
-                        throw new IllegalStateException("binding failed, UUID " + uuid);
-                    }
-                }
-            } else {
-                throw new IllegalStateException("waiting for binding timed out, UUID " + uuid);
-            }
-        } catch (InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
+    @Override
+    public void onCreate() {
+        Log.d(TAG, "onCreate");
     }
 
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent == null) {
-            Log.d(TAG, "received null intent, rebinding services");
-            bindGmsCore();
-            bindPlayStore();
-        } else {
-            String pkg = intent.getAction();
-            boolean res;
-            if (GmsInfo.PACKAGE_GMS_CORE.equals(pkg)) {
-                res = bindGmsCore();
-            } else if (GmsCompat.canBeEnabledFor(pkg)) {
-                res = bind(pkg, GmsCompatClientService.class.getName());
-            } else {
-                // this service is not exported
-                throw new IllegalStateException("unexpected intent action " + pkg);
-            }
-
-            notifyCaller(intent, res);
-        }
-        return START_STICKY;
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "onDestroy");
     }
 
-    private static void notifyCaller(Intent intent, boolean res) {
-        ParcelUuid uuid = intent.getParcelableExtra(EXTRA_ID);
-        CountDownLatch latch;
-        synchronized (pendingLatches) {
-            latch = pendingLatches.remove(uuid);
-        }
-
-        if (latch == null) {
-            // Returning START_STICKY guarantees that intent will be delivered at most once, but
-            // if our process is killed before the service is started (eg due to an out-of-memory
-            // condition, or due to an OS bug), then the process will be recreated, which means
-            // that pendingLatches map contents will be lost.
-            // Caller that waited on this latch is guaranteed to exit in this case: transaction to
-            // our process would have failed because of previous process death, see
-            // GmsCompatApp#connect method
-            Log.d(TAG, "latch == null, UUID " + uuid);
-            return;
-        }
-
-        if (res) {
-            synchronized (completedLatches) {
-                completedLatches.add(latch);
-            }
-        } else {
-            Log.e(TAG, "binding failed, UUID " + uuid);
-        }
-
-        latch.countDown();
+    @Override
+    public IBinder onBind(Intent intent) {
+        throw new IllegalStateException(intent.toString());
     }
-
-    private boolean bindGmsCore() {
-        // GmsDynamiteClientHooks expects "persistent" GMS Core process to be always running, take this into account
-        // if this service becomes unavailable and needs to be replaced
-        return bind(GmsInfo.PACKAGE_GMS_CORE, "com.google.android.gms.chimera.PersistentDirectBootAwareApiService");
-    }
-
-    private boolean bindPlayStore() {
-        return bind(GmsInfo.PACKAGE_PLAY_STORE, GmsCompatClientService.class.getName());
-    }
-    // it's important that both of these services are directBootAware,
-    // keep that in mind if they become unavailable and need to be replaced
-
-    private boolean bind(String pkg, String cls) {
-        if (boundPackages.contains(pkg)) {
-            Log.i(TAG, pkg + " is already bound");
-            return true;
-        }
-        Intent i = new Intent();
-        i.setClassName(pkg, cls);
-
-        int flags = BIND_AUTO_CREATE | BIND_IMPORTANT | BIND_INCLUDE_CAPABILITIES;
-        boolean r = bindService(i, new Connection(pkg, this), flags);
-        if (r) {
-            boundPackages.add(pkg);
-        }
-        return r;
-    }
-
-    static class Connection implements ServiceConnection {
-        final String pkg;
-        final PersistentFgService svc;
-
-        Connection(String pkg, PersistentFgService svc) {
-            this.pkg = pkg;
-            this.svc = svc;
-        }
-
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            Log.d(TAG, "onServiceConnected " + name);
-        }
-
-        public void onServiceDisconnected(ComponentName name) {
-            Log.d(TAG, "onServiceDisconnected " + name);
-        }
-
-        public void onBindingDied(ComponentName name) {
-            Log.d(TAG, "onBindingDied " + name);
-            // see the onBindingDied doc
-            svc.unbindService(this);
-            svc.boundPackages.remove(pkg);
-        }
-
-        public void onNullBinding(ComponentName name) {
-            svc.unbindService(this);
-
-            String msg = "unable to bind " + name;
-            if (pkg.equals(GmsInfo.PACKAGE_GMS_CORE) || pkg.equals(GmsInfo.PACKAGE_PLAY_STORE)) {
-                throw new IllegalStateException(msg);
-            } else {
-                Log.e(TAG, msg);
-            }
-        }
-    }
-
-    @Nullable public IBinder onBind(Intent intent) { return null; }
 }

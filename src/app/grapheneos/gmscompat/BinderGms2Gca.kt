@@ -3,7 +3,6 @@ package app.grapheneos.gmscompat
 import android.app.ApplicationErrorReport
 import android.app.Notification
 import android.app.PendingIntent
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -33,13 +32,12 @@ import com.android.internal.gmscompat.IGca2Gms
 import com.android.internal.gmscompat.IGms2Gca
 import com.android.internal.gmscompat.dynamite.server.IFileProxyService
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.function.Predicate
-import kotlin.collections.ArrayList
 
 object BinderGms2Gca : IGms2Gca.Stub() {
+    val TAG = BinderGms2Gca::class.java.simpleName
     val ctx: Context = App.ctx()
 
     class BoundProcess(val iGca2Gms: IGca2Gms, val pid: Int, val uid: Int, val pkgName: String, val processName: String)
@@ -53,6 +51,8 @@ object BinderGms2Gca : IGms2Gca.Stub() {
         val boundProcess = BoundProcess(iGca2Gms, Binder.getCallingPid(), Binder.getCallingUid(),
                                         pkg, processName)
 
+        Log.d(TAG, "connect from $pkg|$processName, pid ${boundProcess.pid}")
+
         val deathRecipient = DeathRecipient(iGca2Gms)
         try {
             // important to add before linkToDeath() to avoid race with binderDied() callback
@@ -63,7 +63,7 @@ object BinderGms2Gca : IGms2Gca.Stub() {
             deathRecipient.binderDied()
             throw e
         }
-        PersistentFgService.start(pkg, processName);
+        val persistentFgServiceLatch = PersistentFgService.requestStart()
 
         // Config holder update event might be delivered after GMS process starts if both
         // GMS component and GmsCompatConfig holder are updated together, atomically.
@@ -74,11 +74,16 @@ object BinderGms2Gca : IGms2Gca.Stub() {
             config = GmsCompatConfigParser.exec(ctx)
         }
 
+        if (!persistentFgServiceLatch.await(5, TimeUnit.SECONDS)) {
+            Log.e(TAG, "persistentFgServiceLatch timed out")
+        }
+
         return config
     }
 
     class DeathRecipient(val iGca2Gms: IGca2Gms) : IBinder.DeathRecipient {
         override fun binderDied() {
+            PersistentFgService.release()
             removeBoundProcess(iGca2Gms)
         }
     }
@@ -93,15 +98,14 @@ object BinderGms2Gca : IGms2Gca.Stub() {
         synchronized(boundProcesses) {
             val bp = boundProcesses.remove(iGca2Gms)
 
-            if (boundProcesses.size == 0) {
-                val ctx = App.ctx()
-                val i = Intent(ctx, PersistentFgService::class.java)
-                if (ctx.stopService(i)) {
-                    logd{"no bound processes, stopping PersistentFgService"}
-                }
+            if (bp == null) {
+                Log.e(TAG, "removeBoundProcess: unknown binder")
+                return
             }
 
-            when (bp?.processName) {
+            Log.d(TAG, "removeBoundProcess: ${bp.pkgName}|${bp.processName}, pid ${bp.pid}")
+
+            when (bp.processName) {
                 GmsInfo.PACKAGE_PLAY_STORE -> {
                     Notifications.cancel(Notifications.ID_PLAY_STORE_MISSING_OBB_PERMISSION)
                 }
