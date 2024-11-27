@@ -72,7 +72,7 @@ public class App extends Application {
     public interface MainProcessPrefs {
         String LOCATION_REQUEST_REDIRECTION_ENABLED = "enabled_redirections"; // historical name
 
-        String GmsCore_POWER_EXEMPTION_PROMPT_DISMISSED = "GmsCore_power_exemption_prompt_dismissed";
+        String GmsCore_POWER_EXEMPTION_PROMPT_DISMISSED = "GmsCore_power_exemption_prompt_dismissed_2";
         String NOTIFICATION_DO_NOT_SHOW_AGAIN_PREFIX = "do_not_show_notification_";
 
         // set of package names of core GMS components that Play Store to allowed to update to unknown versions
