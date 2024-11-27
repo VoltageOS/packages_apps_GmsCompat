@@ -36,6 +36,7 @@ object Notifications {
     const val ID_CONTACTS_SYNC_PROMPT = 8
     const val ID_MISSING_POST_NOTIFICATIONS_PERM = 9;
     const val ID_ANDROID_AUTO_NEEDS_BASELINE_PERMS = 10
+    const val ID_GmsCore_BACKGROUND_DATA_EXEMPTION_PROMPT = 11
 
     private val uniqueNotificationId = AtomicInteger(10_000)
     fun generateUniqueNotificationId() = uniqueNotificationId.getAndIncrement()
@@ -138,6 +139,48 @@ object Notifications {
             setAutoCancel(true)
             addAction(dontShowAgainAction)
             show(ID_GmsCore_POWER_EXEMPTION_PROMPT)
+        }
+    }
+
+    private var handledGmsCoreBgDataExemption = false
+
+    fun handleGmsCoreRestrictedBackgroundDataNotif() {
+        if (handledGmsCoreBgDataExemption) {
+            return
+        }
+        handledGmsCoreBgDataExemption = true
+
+        val ctx = App.ctx()
+
+        if (ctx.packageManager.checkPermission(android.Manifest.permission.INTERNET,
+                PackageId.GMS_CORE_NAME) != PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+
+        if (App.preferences().getBoolean(MainProcessPrefs.GmsCore_BACKGROUND_DATA_EXEMPTION_PROMPT_DISMISSED, false)) {
+            return
+        }
+
+        val dontShowAgainPa = PendingAction.addOneShot {
+            App.preferences().edit()
+                    .putBoolean(MainProcessPrefs.GmsCore_BACKGROUND_DATA_EXEMPTION_PROMPT_DISMISSED, true)
+                    .apply()
+
+            cancel(ID_GmsCore_BACKGROUND_DATA_EXEMPTION_PROMPT)
+        }
+
+        val dontShowAgainAction = Notification.Action.Builder(null,
+                ctx.getText(R.string.dont_show_again), dontShowAgainPa.pendingIntent).build()
+
+        builder(CH_MISSING_OPTIONAL_PERMISSION).apply {
+            setSmallIcon(R.drawable.ic_configuration_required)
+            setContentTitle(R.string.missing_optional_permission)
+            setContentText(R.string.notif_gmscore_background_data_exemption)
+            setStyle(Notification.BigTextStyle())
+            setContentIntent(activityPendingIntent(gmsCoreSettings()))
+            setAutoCancel(true)
+            addAction(dontShowAgainAction)
+            show(ID_GmsCore_BACKGROUND_DATA_EXEMPTION_PROMPT)
         }
     }
 

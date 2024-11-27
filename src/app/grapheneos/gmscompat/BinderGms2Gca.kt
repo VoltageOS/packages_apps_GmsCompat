@@ -534,4 +534,8 @@ object BinderGms2Gca : IGms2Gca.Stub() {
             show(notifId)
         }
     }
+
+    override fun maybeShowGmsCoreRestrictedBackgroundDataNotif() {
+        Notifications.handleGmsCoreRestrictedBackgroundDataNotif()
+    }
 }

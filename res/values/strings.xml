@@ -84,7 +84,10 @@ To receive them quicker, set “Battery usage” to “Unrestricted” in Play s
     <string name="notif_gms_crash_report">Report to developers</string>
 
     <string name="notif_gmscore_power_exemption">
-"Push notifications will be delayed, because Play services app is not allowed to always run in the background. Tap to resolve."
+"Push notifications will be delayed because Play services app is not allowed to always run in the background. Tap to resolve."
+    </string>
+    <string name="notif_gmscore_background_data_exemption">
+"Push notifications will be delayed because Play services app is not allowed to use mobile data from the background. Tap to open Play services settings, which contain mobile data usage settings."
     </string>
     <string name="dont_show_again">Don\'t show again</string>
 
