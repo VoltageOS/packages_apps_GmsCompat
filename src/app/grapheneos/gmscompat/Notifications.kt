@@ -6,6 +6,8 @@ import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_HIGH
 import android.app.compat.gms.GmsCompat
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.ext.PackageId
 import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
@@ -97,6 +99,11 @@ object Notifications {
         handledGmsCorePowerExemption = true
 
         val ctx = App.ctx()
+
+        if (ctx.packageManager.checkPermission(android.Manifest.permission.INTERNET,
+                PackageId.GMS_CORE_NAME) != PackageManager.PERMISSION_GRANTED) {
+            return
+        }
 
         if (App.preferences().getBoolean(MainProcessPrefs.GmsCore_POWER_EXEMPTION_PROMPT_DISMISSED, false)) {
             return
