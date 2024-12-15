@@ -223,10 +223,10 @@ getPackagesForUid nullArray
 # section name is gmscompat version, section contents are max supported versions of GmsCore and Play Store
 [1000]
 # GmsCore 24.22 requires GmsCompat 1008
-242199999 84379999
+242199999 84409999
 
 [1008]
-244799999 84379999
+245099999 84409999
 
 [[stubs_12.1]]
 
