@@ -216,23 +216,20 @@ class GLocationService(val ctx: Context) : IGoogleLocationManagerService.Stub() 
         val provider = OsLocationProvider.get(client, request.priority, request.granularity)
 
         val consumer = Consumer<Location> { origLocation ->
-            // location.elapsedRealtimeAgeMillis <= request.maxUpdateAgeMillis
-            // check is not needed, maxUpdateAgeMillis applies only to historical locations
-            // which are never returned by OsLocationProvider
-            if (origLocation != null) {
-                val location: Location = provider.maybeFudge(origLocation)
+            // (location.elapsedRealtimeAgeMillis <= request.maxUpdateAgeMillis) check is not needed,
+            // maxUpdateAgeMillis applies only to historical locations which are never returned
+            // by OsLocationProvider
 
-                try {
-                    callback.onResult(Status.SUCCESS, location)
-                } catch (e: RemoteException) {
-                    logd{e}
-                }
+            val result: Location? = if (origLocation != null) {
+                provider.maybeFudge(origLocation)
             } else {
-                try {
-                    callback.onResult(Status(CommonStatusCodes.TIMEOUT), null)
-                } catch (e: RemoteException) {
-                    logd{e}
-                }
+                null
+            }
+            try {
+                // client code expects Status.SUCCESS even when the result is null
+                callback.onResult(Status.SUCCESS, result)
+            } catch (e: RemoteException) {
+                logd{e}
             }
         }
 
