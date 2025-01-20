@@ -63,6 +63,11 @@
             tools:ignore="ExportedContentProvider"
         />
 
+        <receiver
+            android:name=".PendingActionReceiver"
+            android:exported="false"
+            android:directBootAware="true" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

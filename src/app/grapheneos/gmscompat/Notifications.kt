@@ -12,7 +12,6 @@ import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
 import app.grapheneos.gmscompat.App.MainProcessPrefs
-import app.grapheneos.gmscompat.util.PendingAction
 import com.android.internal.gmscompat.GmsInfo
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -87,6 +86,7 @@ object Notifications {
     @JvmStatic
     fun builder(channel: String) = Notification.Builder(App.ctx(), channel)
 
+    @JvmStatic
     fun cancel(id: Int) {
         App.notificationManager().cancel(id)
     }
@@ -119,16 +119,12 @@ object Notifications {
         val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
         intent.data = Uri.fromParts("package", GmsInfo.PACKAGE_GMS_CORE, null)
 
-        val dontShowAgainPa = PendingAction.addOneShot {
-            App.preferences().edit()
-                    .putBoolean(MainProcessPrefs.GmsCore_POWER_EXEMPTION_PROMPT_DISMISSED, true)
-                    .apply()
-
-            cancel(ID_GmsCore_POWER_EXEMPTION_PROMPT)
-        }
+        val dontShowAgainIntent = PendingActionReceiver.makeWriteBoolPrefAndCancelNotif(ctx,
+            MainProcessPrefs.GmsCore_POWER_EXEMPTION_PROMPT_DISMISSED, true,
+            ID_GmsCore_POWER_EXEMPTION_PROMPT)
 
         val dontShowAgainAction = Notification.Action.Builder(null,
-                ctx.getText(R.string.dont_show_again), dontShowAgainPa.pendingIntent).build()
+                ctx.getText(R.string.dont_show_again), dontShowAgainIntent).build()
 
         builder(CH_MISSING_OPTIONAL_PERMISSION).apply {
             setSmallIcon(R.drawable.ic_configuration_required)
@@ -161,16 +157,12 @@ object Notifications {
             return
         }
 
-        val dontShowAgainPa = PendingAction.addOneShot {
-            App.preferences().edit()
-                    .putBoolean(MainProcessPrefs.GmsCore_BACKGROUND_DATA_EXEMPTION_PROMPT_DISMISSED, true)
-                    .apply()
-
-            cancel(ID_GmsCore_BACKGROUND_DATA_EXEMPTION_PROMPT)
-        }
+        val dontShowAgainIntent = PendingActionReceiver.makeWriteBoolPrefAndCancelNotif(ctx,
+            MainProcessPrefs.GmsCore_BACKGROUND_DATA_EXEMPTION_PROMPT_DISMISSED, true,
+            ID_GmsCore_BACKGROUND_DATA_EXEMPTION_PROMPT)
 
         val dontShowAgainAction = Notification.Action.Builder(null,
-                ctx.getText(R.string.dont_show_again), dontShowAgainPa.pendingIntent).build()
+                ctx.getText(R.string.dont_show_again), dontShowAgainIntent).build()
 
         builder(CH_MISSING_OPTIONAL_PERMISSION).apply {
             setSmallIcon(R.drawable.ic_configuration_required)
@@ -216,16 +208,11 @@ object Notifications {
             return null
         }
 
-        val pa = PendingAction.addOneShot {
-            App.preferences().edit()
-                    .putBoolean(pref, true)
-                    .apply()
-
-            cancel(notifId)
-        }
+        val intent = PendingActionReceiver.makeWriteBoolPrefAndCancelNotif(App.ctx(),
+            pref, true, notifId)
 
         return Notification.Action.Builder(null, App.ctx().getText(R.string.dont_show_again),
-                pa.pendingIntent).build()
+                intent).build()
     }
 
     private var handledContactsSync = false
