@@ -25,6 +25,7 @@ object Notifications {
     const val CH_MISSING_PLAY_GAMES_APP = "missing_play_games_app"
     const val CH_BACKGROUND_ACTIVITY_START = "bg_activity_start"
     const val CH_GMS_CRASHED = "gms_crashed"
+    const val CH_MANAGE_PLAY_INTEGRITY_API = "app_used_play_integrity_api"
 
     const val ID_PERSISTENT_FG_SERVICE = 1
     const val ID_PLAY_STORE_PENDING_USER_ACTION = 2
@@ -36,6 +37,7 @@ object Notifications {
     const val ID_MISSING_POST_NOTIFICATIONS_PERM = 9;
     const val ID_ANDROID_AUTO_NEEDS_BASELINE_PERMS = 10
     const val ID_GmsCore_BACKGROUND_DATA_EXEMPTION_PROMPT = 11
+    const val ID_MANAGE_PLAY_INTEGRITY_API = 12
 
     private val uniqueNotificationId = AtomicInteger(10_000)
     fun generateUniqueNotificationId() = uniqueNotificationId.getAndIncrement()
@@ -51,6 +53,7 @@ object Notifications {
             ch(CH_MISSING_PLAY_GAMES_APP, R.string.notif_ch_missing_play_games_app, IMPORTANCE_HIGH),
             ch(CH_BACKGROUND_ACTIVITY_START, R.string.notif_channel_bg_activity_start, IMPORTANCE_HIGH),
             ch(CH_GMS_CRASHED, R.string.notif_ch_gms_crash, IMPORTANCE_HIGH),
+            ch(CH_MANAGE_PLAY_INTEGRITY_API, R.string.notif_ch_manage_play_integrity_api, IMPORTANCE_HIGH),
         )
 
         App.notificationManager().createNotificationChannels(list)

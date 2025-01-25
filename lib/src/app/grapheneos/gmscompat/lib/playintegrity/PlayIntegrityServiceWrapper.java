@@ -4,6 +4,7 @@ import android.annotation.Nullable;
 import android.content.Context;
 import android.content.pm.GosPackageState;
 import android.content.pm.GosPackageStateFlag;
+import android.ext.settings.app.AswBlockPlayIntegrityApi;
 import android.os.Binder;
 import android.os.BinderWrapper;
 import android.os.IBinder;
@@ -11,6 +12,7 @@ import android.os.Parcel;
 import android.os.RemoteException;
 import android.util.Log;
 
+import com.android.internal.gmscompat.GmsCompatApp;
 import com.android.internal.os.BackgroundThread;
 
 import static android.app.compat.gms.GmsCompat.appContext;
@@ -45,6 +47,14 @@ abstract class PlayIntegrityServiceWrapper extends BinderWrapper {
                 gosPs.createEditor(ctx.getPackageName(), ctx.getUser())
                         .addFlag(GosPackageStateFlag.PLAY_INTEGRITY_API_USED_AT_LEAST_ONCE)
                         .apply();
+            }
+            if (!AswBlockPlayIntegrityApi.I.isNotificationEnabled(gosPs)) {
+                return;
+            }
+            try {
+                GmsCompatApp.iClientOfGmsCore2Gca().showPlayIntegrityNotification(ctx.getPackageName(), isBlocked);
+            } catch (RemoteException e) {
+                Log.e(TAG, "", e);
             }
         };
         BackgroundThread.getHandler().post(r);
