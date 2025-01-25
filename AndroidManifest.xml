@@ -18,10 +18,10 @@
         android:protectionLevel="signature|privileged" />
 
     <permission
-        android:name="${applicationId}.SIGNATURE_PROTECTED_PERMISSION"
+        android:name="app.grapheneos.gmscompat.SIGNATURE_PROTECTED_PERMISSION"
         android:protectionLevel="signature" />
 
-    <uses-permission android:name="${applicationId}.SIGNATURE_PROTECTED_PERMISSION" />
+    <uses-permission android:name="app.grapheneos.gmscompat.SIGNATURE_PROTECTED_PERMISSION" />
 
     <!-- These permissions are normally declared in GSF and GmsCore. They were moved here because
     of an issue with permissions that have "normal" protectionLevel. If the app that declares a
@@ -57,7 +57,7 @@
 
         <provider
             android:name=".RpcProvider"
-            android:authorities="${applicationId}.RpcProvider"
+            android:authorities="app.grapheneos.gmscompat.RpcProvider"
             android:exported="true"
             android:directBootAware="true"
             tools:ignore="ExportedContentProvider"
@@ -72,7 +72,7 @@
             android:label="@string/activity_name"
         >
             <intent-filter>
-                <action android:name="${applicationId}.SETTINGS_LINK" />
+                <action android:name="app.grapheneos.gmscompat.SETTINGS_LINK" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
