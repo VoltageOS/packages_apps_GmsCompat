@@ -43,7 +43,7 @@ object Notifications {
     @JvmStatic
     fun createNotificationChannels() {
         val list = listOf(
-            ch(CH_PERSISTENT_FG_SERVICE, R.string.persistent_fg_service_notif),
+            ch(CH_PERSISTENT_FG_SERVICE, R.string.persistent_fg_service_notif).apply { isBlockable = true },
             ch(CH_PLAY_STORE_PENDING_USER_ACTION, R.string.play_store_pending_user_action_notif),
             ch(CH_MISSING_PERMISSION, R.string.missing_permission, IMPORTANCE_HIGH),
             ch(CH_MISSING_OPTIONAL_PERMISSION, R.string.missing_optional_permission),
