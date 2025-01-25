@@ -9,10 +9,12 @@ import android.os.BinderWrapper;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
+import android.util.Log;
 
 import com.android.internal.os.BackgroundThread;
 
 import static android.app.compat.gms.GmsCompat.appContext;
+import static app.grapheneos.gmscompat.lib.playintegrity.PlayIntegrityUtils.isPlayIntegrityBlocked;
 
 abstract class PlayIntegrityServiceWrapper extends BinderWrapper {
     final String TAG;
@@ -23,15 +25,19 @@ abstract class PlayIntegrityServiceWrapper extends BinderWrapper {
         TAG = getClass().getSimpleName();
     }
 
+    protected abstract Binder createTokenRequestStub();
+
     @Override
     public boolean transact(int code, Parcel data, @Nullable Parcel reply, int flags) throws RemoteException {
         if (code == requestIntegrityTokenTxnCode) {
-            onIntegrityTokenRequest();
+            if (maybeStubOutIntegrityTokenRequest(code, data, reply, flags)) {
+                return true;
+            }
         }
         return super.transact(code, data, reply, flags);
     }
 
-    private void onIntegrityTokenRequest() {
+    private void onIntegrityTokenRequest(boolean isBlocked) {
         Runnable r = () -> {
             Context ctx = appContext();
             GosPackageState gosPs = GosPackageState.getForSelf(ctx);
@@ -42,5 +48,28 @@ abstract class PlayIntegrityServiceWrapper extends BinderWrapper {
             }
         };
         BackgroundThread.getHandler().post(r);
+    }
+
+    private boolean maybeStubOutIntegrityTokenRequest(int code, Parcel data, @Nullable Parcel reply, int flags) {
+        Log.d(TAG, "integrity token request detected");
+
+        boolean isBlocked = isPlayIntegrityBlocked();
+        onIntegrityTokenRequest(isBlocked);
+
+        if (!isBlocked) {
+            return false;
+        }
+
+        try {
+            createTokenRequestStub().transact(code, data, reply, flags);
+        } catch (RemoteException e) {
+            // this is a local call
+            throw new IllegalStateException(e);
+        }
+        return true;
+    }
+
+    protected static long getTokenRequestResultDelay() {
+        return 500L;
     }
 }
