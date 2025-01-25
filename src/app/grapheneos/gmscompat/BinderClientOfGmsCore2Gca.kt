@@ -48,7 +48,7 @@ object BinderClientOfGmsCore2Gca : IClientOfGmsCore2Gca.Stub() {
         }
 
         Notifications.builder(Notifications.CH_MANAGE_PLAY_INTEGRITY_API).run {
-            setSmallIcon(R.drawable.ic_configuration_required)
+            setSmallIcon(R.drawable.ic_info)
             setContentTitle(R.string.notif_app_used_play_integrity_api_title)
             val text = if (isBlocked) R.string.notif_app_play_integrity_api_blocked
                 else R.string.notif_app_used_play_integrity_api
