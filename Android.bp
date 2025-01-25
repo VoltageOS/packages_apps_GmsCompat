@@ -19,14 +19,20 @@ android_app {
     manifest: "AndroidManifest.xml",
 
     required: [
-        "whitelist_app.grapheneos.gmscompat.xml",
         "GmsCompatConfig",
-    ]
+        "default-permissions_app.grapheneos.gmscompat.xml",
+        "whitelist_app.grapheneos.gmscompat.xml",
+    ],
 }
 
 prebuilt_etc {
     name: "whitelist_app.grapheneos.gmscompat.xml",
     sub_dir: "sysconfig",
     src: "whitelist_app.grapheneos.gmscompat.xml",
-    filename_from_src: true,
+}
+
+prebuilt_etc {
+    name: "default-permissions_app.grapheneos.gmscompat.xml",
+    sub_dir: "default-permissions",
+    src: "default-permissions_app.grapheneos.gmscompat.xml",
 }
