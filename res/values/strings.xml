@@ -117,4 +117,8 @@ Update to an unknown version may cause crashes and errors in sandboxed Google Pl
     <string name="notif_app_used_play_integrity_api">%1$s used the Play Integrity API</string>
     <string name="notif_app_play_integrity_api_blocked">%1$s was blocked from using the Play Integrity API</string>
     <string name="notif_app_used_play_integrity_api_action_more_info">More info</string>
+
+    <string name="sign_in_with_google_notif_ch">Sign in with Google</string>
+    <string name="sign_in_with_google_notif_title">Enable Google’s credential service</string>
+    <string name="sign_in_with_google_notif_text">“Sign in with Google” requires Google’s credential service to be enabled. Tap to open settings.</string>
 </resources>

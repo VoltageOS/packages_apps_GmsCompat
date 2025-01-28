@@ -26,6 +26,7 @@ object Notifications {
     const val CH_BACKGROUND_ACTIVITY_START = "bg_activity_start"
     const val CH_GMS_CRASHED = "gms_crashed"
     const val CH_MANAGE_PLAY_INTEGRITY_API = "app_used_play_integrity_api"
+    const val CH_SIGN_IN_WITH_GOOGLE = "sign_in_with_google"
 
     const val ID_PERSISTENT_FG_SERVICE = 1
     const val ID_PLAY_STORE_PENDING_USER_ACTION = 2
@@ -38,6 +39,7 @@ object Notifications {
     const val ID_ANDROID_AUTO_NEEDS_BASELINE_PERMS = 10
     const val ID_GmsCore_BACKGROUND_DATA_EXEMPTION_PROMPT = 11
     const val ID_MANAGE_PLAY_INTEGRITY_API = 12
+    const val ID_ENABLE_GOOGLE_CREDENTIAL_PROVIDER = 13
 
     private val uniqueNotificationId = AtomicInteger(10_000)
     fun generateUniqueNotificationId() = uniqueNotificationId.getAndIncrement()
@@ -54,6 +56,7 @@ object Notifications {
             ch(CH_BACKGROUND_ACTIVITY_START, R.string.notif_channel_bg_activity_start, IMPORTANCE_HIGH),
             ch(CH_GMS_CRASHED, R.string.notif_ch_gms_crash, IMPORTANCE_HIGH),
             ch(CH_MANAGE_PLAY_INTEGRITY_API, R.string.notif_ch_manage_play_integrity_api, IMPORTANCE_HIGH),
+            ch(CH_SIGN_IN_WITH_GOOGLE, R.string.sign_in_with_google_notif_ch, IMPORTANCE_HIGH).apply { isBlockable = true },
         )
 
         App.notificationManager().createNotificationChannels(list)

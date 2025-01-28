@@ -2,13 +2,21 @@ package app.grapheneos.gmscompat
 
 import android.app.Notification
 import android.app.PendingIntent
+import android.app.compat.gms.GmsCompat
+import android.content.Context
+import android.content.Intent
 import android.content.pm.GosPackageState
 import android.content.pm.GosPackageStateFlag
+import android.credentials.CredentialManager
+import android.ext.PackageId
 import android.ext.SettingsIntents
 import android.ext.settings.app.AswBlockPlayIntegrityApi
+import android.net.Uri
 import android.os.Binder
 import android.os.BinderDef
+import android.provider.Settings
 import android.util.Log
+import androidx.core.content.getSystemService
 import com.android.internal.gmscompat.IClientOfGmsCore2Gca
 import com.android.internal.gmscompat.dynamite.server.IFileProxyService
 
@@ -70,6 +78,41 @@ object BinderClientOfGmsCore2Gca : IClientOfGmsCore2Gca.Stub() {
             }
             setShowWhen(true)
             show(Notifications.ID_MANAGE_PLAY_INTEGRITY_API)
+        }
+    }
+
+    override fun onGoogleIdCredentialOptionInit() {
+        val ctx = App.ctx()
+        if (!GmsCompat.isEnabledFor(PackageId.GMS_CORE_NAME, ctx.userId)) {
+            return
+        }
+
+        if (isGoogleIdCredentialProviderEnabled(ctx)) {
+            return
+        }
+
+        Notifications.builder(Notifications.CH_SIGN_IN_WITH_GOOGLE).run {
+            val intent = Intent(Settings.ACTION_CREDENTIAL_PROVIDER, Uri.parse("package:" + PackageId.GMS_CORE_NAME))
+            setContentIntent(PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE))
+
+            setSmallIcon(R.drawable.ic_configuration_required)
+            setContentTitle(ctx.getText(R.string.sign_in_with_google_notif_title))
+            setContentText(ctx.getText(R.string.sign_in_with_google_notif_text))
+            setAutoCancel(true)
+            show(Notifications.ID_ENABLE_GOOGLE_CREDENTIAL_PROVIDER)
+        }
+    }
+
+    private fun isGoogleIdCredentialProviderEnabled(ctx: Context): Boolean {
+        val credentialM = ctx.getSystemService<CredentialManager>()!!
+        // isEnabledCredentialProviderService only allows to query app's own services
+        val providers = credentialM.getCredentialProviderServices(ctx.userId,
+                CredentialManager.PROVIDER_FILTER_USER_PROVIDERS_ONLY)
+
+        return providers.any {
+            it.isEnabled
+                    && it.componentName.packageName == PackageId.GMS_CORE_NAME
+                    && it.hasCapability("com.google.android.libraries.identity.googleid.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL")
         }
     }
 }
