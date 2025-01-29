@@ -3,6 +3,7 @@ package app.grapheneos.gmscompat.location
 import android.location.Location
 import android.location.LocationManager
 import android.location.provider.ProviderProperties
+import com.android.server.location.fudger.LocationFudger
 import com.google.android.gms.location.LocationRequest
 
 class OsLocationProvider(val name: String, val properties: ProviderProperties?, val fudger: LocationFudger?, val permission: Permission) {
@@ -51,9 +52,9 @@ class OsLocationProvider(val name: String, val properties: ProviderProperties?, 
                         LocationRequest.GRANULARITY_COARSE -> {
                             permission = Permission.COARSE
                             if (properties == null) {
-                                LocationFudger()
+                                createLocationFudger()
                             } else when (properties.accuracy) {
-                                ProviderProperties.ACCURACY_FINE -> LocationFudger()
+                                ProviderProperties.ACCURACY_FINE -> createLocationFudger()
                                 ProviderProperties.ACCURACY_COARSE -> null
                                 else -> throw IllegalStateException()
                             }
@@ -67,6 +68,12 @@ class OsLocationProvider(val name: String, val properties: ProviderProperties?, 
             }
 
             return OsLocationProvider(name, properties, fudger, permission)
+        }
+
+        private fun createLocationFudger(): LocationFudger {
+            /** @see com.android.server.location.injector.SystemSettingsHelper */
+            val DEFAULT_COARSE_LOCATION_ACCURACY_M = 2000.0f
+            return LocationFudger(DEFAULT_COARSE_LOCATION_ACCURACY_M)
         }
     }
 }
