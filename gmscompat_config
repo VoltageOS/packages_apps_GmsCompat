@@ -183,6 +183,9 @@ getUserRestrictionSources emptyList
 [android.safetycenter.SafetyCenterManager]
 isSafetyCenterEnabled false
 
+[android.security.keystore.recovery.RecoveryController]
+initRecoveryService void
+
 [android.telecom.TelecomManager]
 getAllPhoneAccountHandles emptyList
 getCallCapablePhoneAccounts emptyList
