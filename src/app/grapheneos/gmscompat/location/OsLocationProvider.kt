@@ -22,8 +22,16 @@ class OsLocationProvider(val name: String, val properties: ProviderProperties?, 
         fun get(client: Client, priority: Int, granularity: Int): OsLocationProvider {
             val name = if (priority == LocationRequest.PRIORITY_NO_POWER) {
                 LocationManager.PASSIVE_PROVIDER
+            } else if (priority == LocationRequest.PRIORITY_LOW_POWER) {
+                if (client.locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                    // GmsCore location service doesn't use GNSS for low-power requests
+                    LocationManager.NETWORK_PROVIDER
+                } else {
+                    // network location provider + GNSS
+                    LocationManager.FUSED_PROVIDER
+                }
             } else {
-                LocationManager.GPS_PROVIDER
+                LocationManager.FUSED_PROVIDER
             }
             return get(client, name, granularity)
         }
