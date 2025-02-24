@@ -163,7 +163,7 @@ class GLocationService(val ctx: Context) : IGoogleLocationManagerService.Stub() 
         }
         logd{"contextAttributionTag $contextAttributionTag"}
 
-        val provider = OsLocationProvider.get(client, LocationRequest.GRANULARITY_PERMISSION_LEVEL)
+        val provider = OsLocationProvider.getPassive(client, LocationRequest.GRANULARITY_PERMISSION_LEVEL)
 
         return client.locationManager.getLastKnownLocation(provider.name)?.let {
             provider.maybeFudge(it)
@@ -174,7 +174,7 @@ class GLocationService(val ctx: Context) : IGoogleLocationManagerService.Stub() 
         val client = Client(this)
         logd{"maxAge ${request.maxAge}"}
 
-        val provider = OsLocationProvider.get(client, request.granularity)
+        val provider = OsLocationProvider.getPassive(client, request.granularity)
 
         val location = client.locationManager.getLastKnownLocation(provider.name)?.let {
             if (it.elapsedRealtimeAgeMillis <= request.maxAge) {

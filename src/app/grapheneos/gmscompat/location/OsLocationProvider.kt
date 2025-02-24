@@ -28,9 +28,8 @@ class OsLocationProvider(val name: String, val properties: ProviderProperties?, 
             return get(client, name, granularity)
         }
 
-        fun get(client: Client, granularity: Int): OsLocationProvider {
-            val name = LocationManager.GPS_PROVIDER
-            return get(client, name, granularity)
+        fun getPassive(client: Client, granularity: Int): OsLocationProvider {
+            return get(client, LocationManager.PASSIVE_PROVIDER, granularity)
         }
 
         fun get(client: Client, name: String, granularity: Int): OsLocationProvider {
