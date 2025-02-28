@@ -1,6 +1,8 @@
 package app.grapheneos.gmscompat.location
 
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.location.Location
 import android.location.LocationManager
 import android.os.CancellationSignal
@@ -8,7 +10,7 @@ import android.os.RemoteException
 import androidx.annotation.Keep
 import app.grapheneos.gmscompat.BinderDefSupplier
 import app.grapheneos.gmscompat.logd
-import app.grapheneos.gmscompat.objectToString
+import com.android.internal.gmscompat.GmsCompatApp
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.common.api.internal.IStatusCallback
@@ -278,13 +280,29 @@ class GLocationService(val ctx: Context) : IGoogleLocationManagerService.Stub() 
         logd{"$settingsRequest, packageName $packageName"}
         // GmsCore doesn't check whether caller has a location permission in this case
 
-        val lss = LocationSettingsStates()
-        lss.gpsPresent = true
-        lss.gpsUsable = nonClientLocationManager.isLocationEnabled()
-//        lss.networkLocationPresent = true
-//        lss.networkLocationUsable = lss.gpsUsable
+        val states = LocationSettingsStates().apply {
+            val lm = nonClientLocationManager
+            gpsPresent = lm.hasProvider(LocationManager.GPS_PROVIDER)
+            gpsUsable = gpsPresent && lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
+            networkLocationPresent = lm.hasProvider(LocationManager.NETWORK_PROVIDER)
+            networkLocationUsable = networkLocationPresent && lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        }
 
-        callback.onLocationSettingsResult(LocationSettingsResult(lss, Status.SUCCESS))
+        val status = if (states.gpsUsable || states.networkLocationUsable) {
+            Status.SUCCESS
+        } else {
+            Status(CommonStatusCodes.RESOLUTION_REQUIRED).apply {
+                val intent = Intent().apply {
+                    // StubResolutionActivity is needed for compatibility with apps that expect the
+                    // RESOLUTION_REQUIRED status when global location toggle or network location
+                    // provider is off
+                    setClassName(GmsCompatApp.PKG_NAME, StubResolutionActivity::class.java.name)
+                }
+                resolution = PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+                statusMessage = "no usable location providers"
+            }
+        }
+        callback.onLocationSettingsResult(LocationSettingsResult(states, status))
     }
 
     class BinderDef : BinderDefSupplier(IGoogleLocationManagerService.DESCRIPTOR, GLocationService::class) {

@@ -1,5 +1,6 @@
 package com.google.android.gms.common.api;
 
+import android.app.PendingIntent;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -14,8 +15,8 @@ public final class Status extends SpWriteOnly implements Result {
     public static final Status SUCCESS = new Status(CommonStatusCodes.SUCCESS);
 
     @Property(1) public int statusCode;
-//    @Property(2) public String statusMessage;
-//    @Property(3) public PendingIntent resolution;
+    @Property(2) public String statusMessage;
+    @Property(3) public PendingIntent resolution;
 
     public Status(int statusCode) {
         this.statusCode = statusCode;
@@ -35,6 +36,8 @@ public final class Status extends SpWriteOnly implements Result {
     public void writeToParcel(Parcel p, int wtpFlags) {
         final int headerEnd = SafeParcel.beginObjectHeader(p);
         SafeParcel.writeInt(1, this.statusCode, p);
+        SafeParcel.writeString(2, this.statusMessage, p);
+        SafeParcel.writeParcelable(3, this.resolution, p, wtpFlags);
         SafeParcel.completeObjectHeader(headerEnd, p);
     }
     
