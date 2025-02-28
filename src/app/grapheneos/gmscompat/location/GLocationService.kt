@@ -275,7 +275,7 @@ class GLocationService(val ctx: Context) : IGoogleLocationManagerService.Stub() 
         callback: ISettingsCallbacks,
         packageName: String?
     ) {
-        logd{objectToString(settingsRequest)}
+        logd{"$settingsRequest, packageName $packageName"}
         // GmsCore doesn't check whether caller has a location permission in this case
 
         val lss = LocationSettingsStates()

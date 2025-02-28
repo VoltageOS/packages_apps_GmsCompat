@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import java.util.List;
 
+import app.grapheneos.gmscompat.UtilsKt;
 import app.grapheneos.gmscompat.safeparcel.Property;
 import app.grapheneos.gmscompat.safeparcel.SafeParcel;
 import app.grapheneos.gmscompat.safeparcel.SpReadOnly;
@@ -14,6 +15,11 @@ public class LocationSettingsRequest extends SpReadOnly {
     @Property(1) public List<LocationRequest> requests;
     @Property(2) public boolean alwaysShow;
     @Property(3) public boolean needBle;
+
+    @Override
+    public String toString() {
+        return UtilsKt.objectToString(this);
+    }
 
 // SafeParcel code block generated with Spoon | START
     public static final Parcelable.Creator<LocationSettingsRequest> CREATOR = new Parcelable.Creator<LocationSettingsRequest>() {

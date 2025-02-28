@@ -3,6 +3,7 @@ package com.google.android.gms.location;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import app.grapheneos.gmscompat.UtilsKt;
 import app.grapheneos.gmscompat.safeparcel.Property;
 import app.grapheneos.gmscompat.safeparcel.SafeParcel;
 import app.grapheneos.gmscompat.safeparcel.SpReadOnly;
@@ -42,6 +43,11 @@ public class LocationRequest extends SpReadOnly {
     @Property(15) public boolean bypass;
     @Property(16) public WorkSource workSource;
      */
+
+    @Override
+    public String toString() {
+        return UtilsKt.objectToString(this);
+    }
 
 // SafeParcel code block generated with Spoon | START
     public static final Parcelable.Creator<LocationRequest> CREATOR = new Parcelable.Creator<LocationRequest>() {
