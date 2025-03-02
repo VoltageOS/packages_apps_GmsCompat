@@ -271,40 +271,6 @@ class GLocationService(val ctx: Context) : IGoogleLocationManagerService.Stub() 
         callback.onResult(Status.SUCCESS, res)
     }
 
-    // https://developers.google.com/android/reference/com/google/android/gms/location/SettingsClient#checkLocationSettings(com.google.android.gms.location.LocationSettingsRequest)
-    override fun requestLocationSettingsDialog(
-        settingsRequest: LocationSettingsRequest,
-        callback: ISettingsCallbacks,
-        packageName: String?
-    ) {
-        logd{"$settingsRequest, packageName $packageName"}
-        // GmsCore doesn't check whether caller has a location permission in this case
-
-        val states = LocationSettingsStates().apply {
-            val lm = nonClientLocationManager
-            gpsPresent = lm.hasProvider(LocationManager.GPS_PROVIDER)
-            gpsUsable = gpsPresent && lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
-            networkLocationPresent = lm.hasProvider(LocationManager.NETWORK_PROVIDER)
-            networkLocationUsable = networkLocationPresent && lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-        }
-
-        val status = if (states.gpsUsable || states.networkLocationUsable) {
-            Status.SUCCESS
-        } else {
-            Status(CommonStatusCodes.RESOLUTION_REQUIRED).apply {
-                val intent = Intent().apply {
-                    // StubResolutionActivity is needed for compatibility with apps that expect the
-                    // RESOLUTION_REQUIRED status when global location toggle or network location
-                    // provider is off
-                    setClassName(GmsCompatApp.PKG_NAME, StubResolutionActivity::class.java.name)
-                }
-                resolution = PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE)
-                statusMessage = "no usable location providers"
-            }
-        }
-        callback.onLocationSettingsResult(LocationSettingsResult(states, status))
-    }
-
     class BinderDef : BinderDefSupplier(IGoogleLocationManagerService.DESCRIPTOR, GLocationService::class) {
 
         override fun transactionCodes(callerPkg: String) = intArrayOf(
@@ -318,7 +284,6 @@ class GLocationService(val ctx: Context) : IGoogleLocationManagerService.Stub() 
             /* getLastLocation5 */ 90,
             /* getLocationAvailability */ 34,
             /* getLocationAvailability2 */ 91,
-            /* requestLocationSettingsDialog */ 63,
             /* updateLocationRequest */ 59,
             /* flushLocations */ 67,
             /* registerLocationReceiver */ 88,

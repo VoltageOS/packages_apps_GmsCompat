@@ -31,8 +31,6 @@ interface IGoogleLocationManagerService {
     LocationAvailability getLocationAvailability(String packageName) = 33;
     void getLocationAvailability2(in LocationAvailabilityRequest request, in LocationReceiver receiver) = 90;
 
-    void requestLocationSettingsDialog(in LocationSettingsRequest settingsRequest, ISettingsCallbacks callback, String packageName) = 62;
-
     void updateLocationRequest(in LocationRequestUpdateData locationRequestUpdateData) = 58;
     void flushLocations(IFusedLocationProviderCallback callback) = 66;
 
