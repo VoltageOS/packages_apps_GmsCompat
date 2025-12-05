@@ -121,6 +121,9 @@ notifyPendingSystemUpdate void
 isBackupEnabled false
 isBackupServiceActive false
 
+[android.app.supervision.SupervisionManager]
+isSupervisionEnabled false
+
 [android.app.usage.UsageStatsManager]
 # 10 is STANDBY_BUCKET_ACTIVE
 getAppStandbyBucket int 10
@@ -221,6 +224,7 @@ addVibratorStateListener void
 getSeedAccountOptions null
 getUserName String Owner
 getUserRestrictionSources emptyList
+isMainUser true
 
 [android.safetycenter.SafetyCenterManager]
 isSafetyCenterEnabled false
