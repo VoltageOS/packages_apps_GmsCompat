@@ -4,6 +4,7 @@ import android.app.AppGlobals;
 import android.app.ContentProviderHolder;
 import android.app.IActivityManager;
 import android.app.IApplicationThread;
+import android.app.Notification;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.ext.PackageId;
@@ -49,4 +50,12 @@ class GclActivityManager extends IActivityManager.Stub.Proxy {
         return res;
     }
 
+    @Override
+    public void setServiceForeground(ComponentName className, IBinder token, int id, Notification notification, int flags, int foregroundServiceType) throws android.os.RemoteException {
+        try {
+            super.setServiceForeground(className, token, id, notification, flags, foregroundServiceType);
+        } catch (SecurityException e) {
+            Log.d(TAG, "ignoring setServiceForeground", e);
+        }
+    }
 }
